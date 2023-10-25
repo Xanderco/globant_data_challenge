@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import pandas as pd
 from mysql.connector import Error
 from database import insert_data
+from create_tables import check_and_create_tables
 
 app = Flask(__name__)
 
@@ -28,4 +29,5 @@ def upload_csv():
 
 
 if __name__ == '__main__':
+    check_and_create_tables() # Check if all required tables are present, if not, creates them
     app.run(debug=True)
