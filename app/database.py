@@ -26,8 +26,11 @@ def close_connection(connection):
 
 def insert_data(table, data):
     """Insert data into the specified table."""
-    columns = ", ".join(data.keys())
-    placeholders = ", ".join(["%s"] * len(data))
+    if not data:
+        return
+    
+    columns = ", ".join(data[0].keys())
+    placeholders = ", ".join(["%s"] * len(data[0]))
     insert_query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
     
     connection = create_connection()
