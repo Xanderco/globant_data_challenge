@@ -1,8 +1,9 @@
 from flask import Flask, request, jsonify
 import pandas as pd
 from mysql.connector import Error
-from database import insert_data
+from database import insert_data, execute_query
 from create_tables import check_and_create_tables
+from decimal import Decimal
 
 app = Flask(__name__)
 
@@ -58,6 +59,53 @@ def upload_csv():
         insert_data(file_type, data)
 
     return jsonify({"message": "Data inserted successfully"}), 200
+
+@app.route('/metrics/employees-by-quarter', methods=['GET'])
+def employees_by_quarter():
+    query = """
+    SELECT 
+        d.department_name AS department,
+        j.job_name AS job,
+        SUM(CASE WHEN QUARTER(e.date_hired) = 1 THEN 1 ELSE 0 END) AS Q1,
+        SUM(CASE WHEN QUARTER(e.date_hired) = 2 THEN 1 ELSE 0 END) AS Q2,
+        SUM(CASE WHEN QUARTER(e.date_hired) = 3 THEN 1 ELSE 0 END) AS Q3,
+        SUM(CASE WHEN QUARTER(e.date_hired) = 4 THEN 1 ELSE 0 END) AS Q4
+    FROM 
+        departments d 
+    JOIN 
+        hired_employees e ON d.department_id = e.department_id
+    JOIN 
+        jobs j ON e.job_id = j.job_id
+    WHERE 
+        YEAR(e.date_hired) = 2021 
+    GROUP BY 
+        d.department_name, j.job_name;
+    """
+    results = execute_query(query)
+
+    for row in results:
+        for key, value in row.items():
+            if isinstance(value, Decimal):
+                row[key] = float(value)
+
+    return jsonify(results)
+
+@app.route('/metrics/departments-with-employees', methods=['GET'])
+def departments_with_employees():
+    query = """
+    SELECT 
+        d.department_id, 
+        d.department_name, 
+        COUNT(e.emp_id) as num_employees 
+    FROM 
+        departments d 
+    LEFT JOIN 
+        hired_employees e ON d.department_id = e.department_id 
+    GROUP BY 
+        d.department_id;
+    """
+    results = execute_query(query)
+    return jsonify(results)
 
 
 if __name__ == '__main__':
