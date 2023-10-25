@@ -32,11 +32,15 @@ def insert_data(table, data):
     columns = ", ".join(data[0].keys())
     placeholders = ", ".join(["%s"] * len(data[0]))
     insert_query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
+
+    # Convert list of dictionaries to list of tuples
+    data_tuples = [tuple(record.values()) for record in data]
     
     connection = create_connection()
     cursor = connection.cursor()
-    for record in data:
-        cursor.execute(insert_query, list(record.values()))
+    
+    # Execute batch transaction
+    cursor.executemany(insert_query, data_tuples)
     
     connection.commit()
     cursor.close()

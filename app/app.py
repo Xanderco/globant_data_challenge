@@ -31,6 +31,13 @@ def upload_csv():
     # Read CSV using pandas with the specified column names
     df = pd.read_csv(file, header=None, names=columns)
 
+    num_rows = df.shape[0]
+
+    # Define the batch size
+    batch_size = 1000
+
+    num_batches = (num_rows // batch_size) + (1 if num_rows % batch_size else 0)
+
     # Handle dirty data
     ##df['date_hired'].fillna("1990-01-01T00:00:00Z", inplace=True)
     ##df.fillna("Blank", inplace=True)  # replace "DEFAULT_VALUE" with an actual value
@@ -38,16 +45,18 @@ def upload_csv():
     # If any value Blank, drop for consistency
     df.dropna(inplace=True)
     
-
     # Check if date_hired column exists and format it in a way MariaDB Understands
     if 'date_hired' in df.columns:
         df['date_hired'] = pd.to_datetime(df['date_hired']).dt.strftime('%Y-%m-%d %H:%M:%S')
-
-    # Convert the DataFrame to a list of dictionaries for insertion
-    data = df.to_dict(orient='records')
     
-    # Insert data using database.py
-    insert_data(file_type,data)
+    # Execute in batchs of 1000 or less
+    for i in range(num_batches):
+        start_idx = i * batch_size
+        end_idx = start_idx + batch_size
+        batch = df.iloc[start_idx:end_idx]
+        data = batch.to_dict(orient='records')
+        insert_data(file_type, data)
+
     return jsonify({"message": "Data inserted successfully"}), 200
 
 
