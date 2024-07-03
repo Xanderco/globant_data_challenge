@@ -20,9 +20,9 @@ def test_hello_endpoint(client):
 
 def test_upload_csv_endpoint(client):
     data_files = [
-        ('/mnt/data/hired_employees.csv', 'hired_employees'),
         ('/mnt/data/departments.csv', 'departments'),
-        ('/mnt/data/jobs.csv', 'jobs')
+        ('/mnt/data/jobs.csv', 'jobs'),
+        ('/mnt/data/hired_employees.csv', 'hired_employees')
     ]
     
     for file_path, file_type in data_files:
