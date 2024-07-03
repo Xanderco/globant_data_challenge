@@ -1,6 +1,7 @@
 import mysql.connector
 from mysql.connector import Error
 import os
+import time
 
 DATABASE_CONFIG = {
     'host': os.environ.get('DATABASE_HOST', 'db'), 
@@ -10,13 +11,22 @@ DATABASE_CONFIG = {
     'database': os.environ.get('DATABASE_DB', 'globant_flask_db')
 }
 
-def create_connection():
+def create_connection(retries=5, delay=5):
     """Create and return a new database connection."""
     connection = None
-    try:
-        connection = mysql.connector.connect(**DATABASE_CONFIG)
-    except Error as e:
-        print(f"Error connecting to MariaDB: {e}")
+    for i in range(retries):
+        try:
+            connection = mysql.connector.connect(**DATABASE_CONFIG)
+            if connection.is_connected():
+                print("Successfully connected to the database")
+                return connection
+        except Error as e:
+            print(f"Error connecting to MariaDB: {e}")
+            if i < retries - 1:
+                print(f"Retrying in {delay} seconds...")
+                time.sleep(delay)
+            else:
+                print("Failed to connect to the database after several attempts.")
     return connection
 
 def close_connection(connection):

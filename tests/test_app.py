@@ -1,6 +1,11 @@
+import sys
+import os
 import pytest
-from app.app import app
 
+# Add the app directory to the Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../app')))
+
+from app import app
 
 @pytest.fixture
 def client():
@@ -14,8 +19,24 @@ def test_hello_endpoint(client):
     assert b"Hello, Globant, It's Alex" in response.data
 
 def test_upload_csv_endpoint(client):
-    with open('../data_challenge_files/hired_employees.csv', 'rb') as data:
-        response = client.post('/upload-csv', content_type='multipart/form-data', data={'file': data, 'type': 'hired_employees'})
+    data_files = [
+        ('/mnt/data/hired_employees.csv', 'hired_employees'),
+        ('/mnt/data/departments.csv', 'departments'),
+        ('/mnt/data/jobs.csv', 'jobs')
+    ]
+    
+    for file_path, file_type in data_files:
+        with open(file_path, 'rb') as data:
+            response = client.post('/upload-csv', content_type='multipart/form-data', data={'file': data, 'type': file_type})
+            assert response.status_code == 200
+            assert b"Data inserted successfully" in response.data
 
+def test_employees_by_quarter(client):
+    response = client.get('/metrics/employees-by-quarter')
     assert response.status_code == 200
-    assert b"Data inserted successfully" in response.data
+    assert b"department" in response.data
+
+def test_departments_with_employees(client):
+    response = client.get('/metrics/departments-with-employees')
+    assert response.status_code == 200
+    assert b"department_id" in response.data

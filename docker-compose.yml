@@ -16,6 +16,8 @@ services:
       - db
     volumes:
       - ./app:/app
+      - ./tests:/tests
+      - globant_data_challenge_data_volume:/mnt/data
     command: ["python", "/app/app.py"]
 
   db:
@@ -31,3 +33,4 @@ services:
 
 volumes:
   mariadb_data:
+  globant_data_challenge_data_volume:
